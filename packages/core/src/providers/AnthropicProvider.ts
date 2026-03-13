@@ -20,13 +20,37 @@ interface CostReportResponse {
 
 export class AnthropicProvider implements IUsageProvider {
   validateConfig(config: ProviderConfig): boolean {
-    return config.type === "anthropic" && !!config.apiKey;
+    if (config.type !== "anthropic") return false;
+    if (config.apiKey) return true;
+    return (
+      config.manualUsed != null &&
+      config.manualLimit != null &&
+      config.manualLimit > 0
+    );
   }
 
   async fetchUsage(config: ProviderConfig): Promise<UsageSnapshot> {
-    if (!this.validateConfig(config) || !config.apiKey) {
-      return this.errorSnapshot(config.id);
+    if (config.type !== "anthropic") return this.errorSnapshot(config.id);
+    if (
+      config.manualUsed != null &&
+      config.manualLimit != null &&
+      config.manualLimit > 0
+    ) {
+      const used = config.manualUsed;
+      const limit = config.manualLimit;
+      const ratio = limit > 0 ? used / limit : 0;
+      const status = ratio >= 1 ? "error" : ratio >= 0.8 ? "warning" : "ok";
+      return {
+        providerId: config.id,
+        used,
+        limit,
+        unit: "USD",
+        timestamp: Date.now(),
+        status,
+        displayName: config.displayName ?? "Anthropic",
+      };
     }
+    if (!config.apiKey) return this.errorSnapshot(config.id);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startingAt = startOfMonth.toISOString();

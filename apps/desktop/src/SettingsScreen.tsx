@@ -180,7 +180,7 @@ export function SettingsScreen({
                   className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                 />
               </div>
-              {(form.type === "openai" || form.type === "anthropic") && (
+              {form.type === "openai" && (
                 <div>
                   <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
                     API ключ
@@ -195,6 +195,64 @@ export function SettingsScreen({
                     className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                   />
                 </div>
+              )}
+              {form.type === "anthropic" && (
+                <>
+                  <div>
+                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
+                      API ключ (опционально — или введите расход вручную)
+                    </label>
+                    <input
+                      type="password"
+                      value={form.apiKey ?? ""}
+                      onChange={(e) =>
+                        setForm({ ...form, apiKey: e.target.value })
+                      }
+                      placeholder="sk-ant-... — пусто = ручной ввод"
+                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
+                      Использовано $ (ручной ввод, из консоли)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.manualUsed ?? ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          manualUsed: e.target.value
+                            ? Number(e.target.value)
+                            : undefined,
+                        })
+                      }
+                      placeholder="0"
+                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
+                      Лимит $ (ручной)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={form.manualLimit ?? ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          manualLimit: e.target.value
+                            ? Number(e.target.value)
+                            : undefined,
+                        })
+                      }
+                      placeholder="100"
+                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
+                    />
+                  </div>
+                </>
               )}
               {(form.type === "gemini" || form.type === "zai") && (
                 <>
