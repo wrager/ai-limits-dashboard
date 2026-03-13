@@ -1,6 +1,6 @@
 {
   "name": "@ai-limits/android",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": true,
   "scripts": {
     "build": "echo Android: run ./gradlew assembleDebug from apps/android"
