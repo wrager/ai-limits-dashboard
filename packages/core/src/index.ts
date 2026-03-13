@@ -2,7 +2,7 @@
  * @ai-limits/core — Shared logic for AI usage providers
  */
 
-export const coreVersion = "0.1.0-alpha.1";
+export const coreVersion = "0.1.0-alpha.2";
 
 export type { ProviderConfig, ProviderType } from "./models/ProviderConfig.js";
 export type { UsageSnapshot, UsageStatus } from "./models/UsageSnapshot.js";
