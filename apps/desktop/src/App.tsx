@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { load } from "@tauri-apps/plugin-store";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -10,8 +11,6 @@ import { SettingsScreen } from "./SettingsScreen";
 
 const STORE_KEY = "providerConfigs";
 const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 min
-
-type View = "popup" | "settings" | "dashboard";
 
 function statusColor(status: string): string {
   switch (status) {
@@ -120,7 +119,7 @@ function PopupView({
 }
 
 function App() {
-  const [view, setView] = useState<View>("popup");
+  const navigate = useNavigate();
   const [configs, setConfigs] = useState<ProviderConfig[]>([]);
   const [state, setState] = useState<AggregatedState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -197,102 +196,117 @@ function App() {
     return () => clearInterval(id);
   }, [configs, fetchUsage]);
 
+  const dashboardContent = (
+    <>
+      {loading && configs.length > 0 ? (
+        <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+          Загрузка…
+        </div>
+      ) : configs.length === 0 ? (
+        <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+          Добавьте провайдеры в настройках
+        </div>
+      ) : state?.snapshots.length === 0 ? (
+        <div className="text-neutral-500 dark:text-neutral-400 text-sm">
+          Нет валидных провайдеров
+        </div>
+      ) : (
+        <ul className="space-y-3">
+          {state?.snapshots.map((s) => {
+            const pct =
+              s.limit > 0 ? Math.min(100, (s.used / s.limit) * 100) : 0;
+            return (
+              <li key={s.providerId} className="space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium">
+                    {s.displayName ?? s.providerId}
+                  </span>
+                  <span className="text-neutral-500">
+                    {s.used} / {s.limit} {s.unit}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
+                  <div
+                    className={`h-full transition-all ${statusColor(s.status)}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 flex flex-col">
-      {view === "settings" ? (
-        <>
-          <header className="flex items-center gap-2 p-3 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
-            <button
-              type="button"
-              onClick={() => setView("popup")}
-              className="p-2 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              title="Назад"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <h1 className="text-lg font-semibold">Настройки</h1>
-          </header>
-          <SettingsScreen
-            configs={configs}
-            onConfigsChange={onConfigsChange}
-          />
-        </>
-      ) : view === "dashboard" ? (
-        <>
-          <header className="flex items-center gap-2 p-3 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
-            <button
-              type="button"
-              onClick={() => setView("popup")}
-              className="p-2 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              title="Назад"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <h1 className="text-lg font-semibold">Dashboard</h1>
-            <button
-              type="button"
-              onClick={refresh}
-              disabled={refreshing || loading}
-              className="ml-auto p-2 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-50"
-              title="Обновить"
-            >
-              <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
-            </button>
-          </header>
-          <main className="flex-1 p-4 overflow-auto">
-            {loading && configs.length > 0 ? (
-              <div className="text-neutral-500 dark:text-neutral-400 text-sm">
-                Загрузка…
-              </div>
-            ) : configs.length === 0 ? (
-              <div className="text-neutral-500 dark:text-neutral-400 text-sm">
-                Добавьте провайдеры в настройках
-              </div>
-            ) : state?.snapshots.length === 0 ? (
-              <div className="text-neutral-500 dark:text-neutral-400 text-sm">
-                Нет валидных провайдеров
-              </div>
-            ) : (
-              <ul className="space-y-3">
-                {state?.snapshots.map((s) => {
-                  const pct =
-                    s.limit > 0
-                      ? Math.min(100, (s.used / s.limit) * 100)
-                      : 0;
-                  return (
-                    <li key={s.providerId} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">
-                          {s.displayName ?? s.providerId}
-                        </span>
-                        <span className="text-neutral-500">
-                          {s.used} / {s.limit} {s.unit}
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
-                        <div
-                          className={`h-full transition-all ${statusColor(s.status)}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </main>
-        </>
-      ) : (
-        <PopupView
-          configs={configs}
-          state={state}
-          loading={loading}
-          refreshing={refreshing}
-          onRefresh={refresh}
-          onOpenSettings={() => setView("settings")}
-          onOpenDashboard={() => setView("dashboard")}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <PopupView
+              configs={configs}
+              state={state}
+              loading={loading}
+              refreshing={refreshing}
+              onRefresh={refresh}
+              onOpenSettings={() => navigate("/settings")}
+              onOpenDashboard={() => navigate("/dashboard")}
+            />
+          }
         />
-      )}
+        <Route
+          path="/settings"
+          element={
+            <>
+              <header className="flex items-center gap-2 p-3 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="p-2 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                  title="Назад"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <h1 className="text-lg font-semibold">Настройки</h1>
+              </header>
+              <SettingsScreen
+                configs={configs}
+                onConfigsChange={onConfigsChange}
+              />
+            </>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <>
+              <header className="flex items-center gap-2 p-3 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  className="p-2 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                  title="Назад"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <h1 className="text-lg font-semibold">Dashboard</h1>
+                <button
+                  type="button"
+                  onClick={refresh}
+                  disabled={refreshing || loading}
+                  className="ml-auto p-2 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-50"
+                  title="Обновить"
+                >
+                  <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
+                </button>
+              </header>
+              <main className="flex-1 p-4 overflow-auto">{dashboardContent}</main>
+            </>
+          }
+        />
+      </Routes>
     </div>
   );
 }

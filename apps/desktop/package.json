@@ -1,6 +1,6 @@
 {
   "name": "@ai-limits/desktop",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.1",
   "type": "module",
   "private": true,
   "scripts": {
@@ -19,7 +19,8 @@
     "@tauri-apps/plugin-store": "^2.4.2",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.1",

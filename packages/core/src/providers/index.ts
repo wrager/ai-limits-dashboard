@@ -21,3 +21,13 @@ const providers: Record<ProviderType, IUsageProvider> = {
 export function getProvider(type: ProviderType): IUsageProvider {
   return providers[type];
 }
+
+export {
+  getProviderMeta,
+  getAllProviderMetas,
+} from "./settingsRegistry.js";
+export type {
+  ProviderMeta,
+  ProviderSettingField,
+  SettingFieldType,
+} from "./ProviderSettingsSchema.js";

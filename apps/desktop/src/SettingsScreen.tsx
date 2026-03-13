@@ -1,18 +1,15 @@
 /**
- * Экран настроек: провайдеры, API ключи, режим taskbar/desktop
+ * Экран настроек: провайдеры (поля из схемы провайдеров)
  */
 import { useState, useCallback } from "react";
 import { load } from "@tauri-apps/plugin-store";
 import type { ProviderConfig, ProviderType } from "@ai-limits/core";
+import {
+  getAllProviderMetas,
+  getProviderMeta,
+} from "@ai-limits/core";
 
 const STORE_KEY = "providerConfigs";
-
-const PROVIDER_TYPES: { value: ProviderType; label: string }[] = [
-  { value: "openai", label: "OpenAI" },
-  { value: "anthropic", label: "Anthropic" },
-  { value: "gemini", label: "Gemini" },
-  { value: "zai", label: "z.ai" },
-];
 
 interface SettingsScreenProps {
   configs: ProviderConfig[];
@@ -148,19 +145,19 @@ export function SettingsScreen({
                 </label>
                 <select
                   value={form.type ?? "openai"}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const type = e.target.value as ProviderType;
+                    const meta = getProviderMeta(type);
                     setForm({
                       ...form,
-                      type: e.target.value as ProviderType,
-                      displayName:
-                        PROVIDER_TYPES.find((p) => p.value === e.target.value)
-                          ?.label ?? form.displayName,
-                    })
-                  }
+                      type,
+                      displayName: meta?.label ?? form.displayName,
+                    });
+                  }}
                   className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                 >
-                  {PROVIDER_TYPES.map((p) => (
-                    <option key={p.value} value={p.value}>
+                  {getAllProviderMetas().map((p) => (
+                    <option key={p.type} value={p.type}>
                       {p.label}
                     </option>
                   ))}
@@ -176,126 +173,47 @@ export function SettingsScreen({
                   onChange={(e) =>
                     setForm({ ...form, displayName: e.target.value })
                   }
-                  placeholder="OpenAI"
+                  placeholder={
+                    form.type ? getProviderMeta(form.type)?.label ?? "OpenAI" : "OpenAI"
+                  }
                   className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                 />
               </div>
-              {form.type === "openai" && (
-                <div>
-                  <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
-                    API ключ
-                  </label>
-                  <input
-                    type="password"
-                    value={form.apiKey ?? ""}
-                    onChange={(e) =>
-                      setForm({ ...form, apiKey: e.target.value })
-                    }
-                    placeholder="sk-..."
-                    className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
-                  />
-                </div>
-              )}
-              {form.type === "anthropic" && (
-                <>
-                  <div>
-                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
-                      API ключ (опционально — или введите расход вручную)
-                    </label>
-                    <input
-                      type="password"
-                      value={form.apiKey ?? ""}
-                      onChange={(e) =>
-                        setForm({ ...form, apiKey: e.target.value })
-                      }
-                      placeholder="sk-ant-... — пусто = ручной ввод"
-                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
-                      Использовано $ (ручной ввод, из консоли)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.manualUsed ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          manualUsed: e.target.value
-                            ? Number(e.target.value)
-                            : undefined,
-                        })
-                      }
-                      placeholder="0"
-                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
-                      Лимит $ (ручной)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={form.manualLimit ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          manualLimit: e.target.value
-                            ? Number(e.target.value)
-                            : undefined,
-                        })
-                      }
-                      placeholder="100"
-                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
-                    />
-                  </div>
-                </>
-              )}
-              {(form.type === "gemini" || form.type === "zai") && (
-                <>
-                  <div>
-                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
-                      Использовано (ручной ввод)
-                    </label>
-                    <input
-                      type="number"
-                      value={form.manualUsed ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          manualUsed: e.target.value
-                            ? Number(e.target.value)
-                            : undefined,
-                        })
-                      }
-                      placeholder="0"
-                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
-                      Лимит (ручной)
-                    </label>
-                    <input
-                      type="number"
-                      value={form.manualLimit ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          manualLimit: e.target.value
-                            ? Number(e.target.value)
-                            : undefined,
-                        })
-                      }
-                      placeholder="100"
-                      className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
-                    />
-                  </div>
-                </>
-              )}
+              {form.type &&
+                getProviderMeta(form.type)?.settings.map((field) => {
+                  const formData = form as Record<string, unknown>;
+                  const value = formData[field.key];
+                  const inputValue =
+                    typeof value === "number" ? (value === 0 ? "0" : value) : (value as string) ?? "";
+                  return (
+                    <div key={field.key}>
+                      <label className="block text-neutral-600 dark:text-neutral-400 mb-0.5">
+                        {field.label}
+                        {field.optional && " (опционально)"}
+                      </label>
+                      <input
+                        type={field.type === "password" ? "password" : field.type === "number" ? "number" : "text"}
+                        step={field.step}
+                        value={inputValue}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          const next =
+                            field.type === "number"
+                              ? v ? Number(v) : undefined
+                              : v || undefined;
+                          setForm({ ...form, [field.key]: next });
+                        }}
+                        placeholder={field.placeholder}
+                        className="w-full p-2 rounded border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
+                      />
+                      {field.hint && (
+                        <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                          {field.hint}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
             <div className="flex gap-2">
               <button
