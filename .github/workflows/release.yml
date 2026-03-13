@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
+  release-desktop:
     permissions:
       contents: write
     runs-on: windows-latest
@@ -34,7 +34,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build and release
+      - name: Build core and frontend
+        run: pnpm build
+
+      - name: Build and release (Windows)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,6 +47,41 @@ jobs:
           releaseName: 'AI Limits Dashboard v__VERSION__'
           releaseBody: |
             Виджет для отображения лимитов AI-сервисов (OpenAI, Anthropic, Gemini, z.ai) в панели задач Windows.
-            См. Assets для скачивания установщика.
+            **Windows:** установщик .msi / .exe
+            **Android:** APK
           releaseDraft: false
           args: ''
+
+  release-android:
+    permissions:
+      contents: write
+    needs: release-desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Generate Gradle wrapper
+        working-directory: apps/android
+        run: |
+          docker run --rm -v "$(pwd):/project" -w /project gradle:8.7-jdk17 gradle wrapper --gradle-version 8.7
+
+      - name: Build release APK
+        working-directory: apps/android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Upload APK to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" \
+            apps/android/app/build/outputs/apk/release/*.apk \
+            --repo "${{ github.repository }}"
