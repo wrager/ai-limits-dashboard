@@ -1,0 +1,98 @@
+import type { ProviderConfig } from "../models/ProviderConfig.js";
+import type { UsageSnapshot } from "../models/UsageSnapshot.js";
+import type { IUsageProvider } from "./IUsageProvider.js";
+
+interface CustomEndpointResponse {
+  used?: number;
+  limit?: number;
+  unit?: string;
+}
+
+/**
+ * Gemini не имеет единого Usage API.
+ * Поддерживает: manualUsed/manualLimit в конфиге или customEndpoint,
+ * возвращающий JSON вида { used, limit, unit? }.
+ */
+export class GeminiProvider implements IUsageProvider {
+  validateConfig(config: ProviderConfig): boolean {
+    if (config.type !== "gemini") return false;
+    if (config.customEndpoint) return true;
+    const manual = config.manualUsed != null && config.manualLimit != null;
+    return !!config.apiKey || manual;
+  }
+
+  async fetchUsage(config: ProviderConfig): Promise<UsageSnapshot> {
+    if (config.type !== "gemini") {
+      return this.errorSnapshot(config.id, "Invalid provider type");
+    }
+    if (config.customEndpoint) {
+      return this.fetchFromCustom(config);
+    }
+    if (
+      config.manualUsed != null &&
+      config.manualLimit != null &&
+      config.manualLimit > 0
+    ) {
+      const used = config.manualUsed;
+      const limit = config.manualLimit;
+      const ratio = used / limit;
+      const status = ratio >= 1 ? "error" : ratio >= 0.8 ? "warning" : "ok";
+      return {
+        providerId: config.id,
+        used,
+        limit,
+        unit: "tokens",
+        timestamp: Date.now(),
+        status,
+        displayName: config.displayName ?? "Gemini",
+      };
+    }
+    return this.errorSnapshot(
+      config.id,
+      "Gemini requires manualUsed/manualLimit or customEndpoint",
+    );
+  }
+
+  private async fetchFromCustom(config: ProviderConfig): Promise<UsageSnapshot> {
+    const url = config.customEndpoint!;
+    try {
+      const headers: Record<string, string> = {};
+      if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        return this.errorSnapshot(config.id, `${res.status}: ${await res.text()}`);
+      }
+      const body = (await res.json()) as CustomEndpointResponse;
+      const used = body.used ?? 0;
+      const limit = body.limit ?? 1;
+      const ratio = limit > 0 ? used / limit : 0;
+      const status = ratio >= 1 ? "error" : ratio >= 0.8 ? "warning" : "ok";
+      return {
+        providerId: config.id,
+        used,
+        limit,
+        unit: body.unit ?? "tokens",
+        timestamp: Date.now(),
+        status,
+        displayName: config.displayName ?? "Gemini",
+      };
+    } catch (err) {
+      return this.errorSnapshot(
+        config.id,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  private errorSnapshot(providerId: string, message: string): UsageSnapshot {
+    return {
+      providerId,
+      used: 0,
+      limit: 1,
+      unit: "tokens",
+      timestamp: Date.now(),
+      status: "error",
+      displayName: "Gemini",
+    };
+  }
+}
