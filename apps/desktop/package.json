@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "node -e \"\"",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@ai-limits/core": "workspace:*",

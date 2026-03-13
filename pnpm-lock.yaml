@@ -27,6 +27,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9
 
+  apps/android: {}
+
   apps/desktop:
     dependencies:
       '@ai-limits/core':

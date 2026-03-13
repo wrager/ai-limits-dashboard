@@ -3,12 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm -r run dev --parallel",
+    "dev": "pnpm --filter @ai-limits/desktop run dev",
     "build": "pnpm -r run build",
     "lint": "eslint .",
     "typecheck": "pnpm -r run typecheck",
     "test": "vitest run",
-    "e2e": "echo 'E2E: run after Tauri scaffold (tauri-driver + WebdriverIO)'"
+    "e2e": "echo 'E2E: run after Tauri scaffold (tauri-driver + WebdriverIO)'",
+    "preview": "pnpm build && pnpm --filter @ai-limits/desktop run preview"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
