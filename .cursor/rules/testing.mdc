@@ -1,0 +1,17 @@
+---
+description: Правила тестирования
+globs: ["**/*.test.ts", "**/*.spec.ts"]
+alwaysApply: false
+---
+
+# Testing
+
+- Vitest для unit и integration
+- HTTP: мокировать `fetch` через `vi.mock('node-fetch')` или MSW
+- Фикстуры в `**/fixtures/*.json` для mock-ответов API
+
+```typescript
+vi.mock('node-fetch', () => ({
+  default: vi.fn(() => ({ json: () => fixture })),
+}));
+```

@@ -1,0 +1,20 @@
+---
+description: Паттерны провайдеров
+globs: packages/core/**/*.ts
+alwaysApply: false
+---
+
+# Provider Patterns
+
+Интерфейс `IUsageProvider`:
+
+```typescript
+interface IUsageProvider {
+  fetchUsage(config: ProviderConfig): Promise<UsageSnapshot>;
+  validateConfig(config: ProviderConfig): boolean;
+}
+```
+
+- Один провайдер — один класс-адаптер
+- Маппинг API-ответа в `UsageSnapshot` внутри адаптера
+- `validateConfig` проверяет обязательные поля (apiKey, type и т.д.)

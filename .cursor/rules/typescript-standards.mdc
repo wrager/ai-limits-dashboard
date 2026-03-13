@@ -1,0 +1,22 @@
+---
+description: Стандарты TypeScript
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+- `strict: true` — обязательно
+- Запрет `any`; для неизвестных типов — `unknown` + type guard
+- Обработка ошибок: не оставлять пустой `catch`, логировать и пробрасывать
+
+```typescript
+// ❌ BAD
+catch (e) {}
+
+// ✅ GOOD
+catch (e) {
+  const err = e instanceof Error ? e : new Error(String(e));
+  throw new ProviderError('Fetch failed', { cause: err });
+}
+```

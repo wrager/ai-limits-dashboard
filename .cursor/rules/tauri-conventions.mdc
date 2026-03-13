@@ -1,0 +1,11 @@
+---
+description: Tauri / desktop conventions
+globs: apps/desktop/**/*
+alwaysApply: false
+---
+
+# Tauri Conventions
+
+- IPC через `invoke()`; команды в `src-tauri/src/`
+- Хранение: `tauri-plugin-store` (API-ключи, настройки)
+- Режимы: taskbar (по умолчанию), desktop widget — опция в настройках
