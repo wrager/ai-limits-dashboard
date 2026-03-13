@@ -23,7 +23,7 @@ export class GeminiProvider implements IUsageProvider {
 
   async fetchUsage(config: ProviderConfig): Promise<UsageSnapshot> {
     if (config.type !== "gemini") {
-      return this.errorSnapshot(config.id, "Invalid provider type");
+      return this.errorSnapshot(config.id);
     }
     if (config.customEndpoint) {
       return this.fetchFromCustom(config);
@@ -47,10 +47,7 @@ export class GeminiProvider implements IUsageProvider {
         displayName: config.displayName ?? "Gemini",
       };
     }
-    return this.errorSnapshot(
-      config.id,
-      "Gemini requires manualUsed/manualLimit or customEndpoint",
-    );
+    return this.errorSnapshot(config.id);
   }
 
   private async fetchFromCustom(config: ProviderConfig): Promise<UsageSnapshot> {
@@ -60,7 +57,7 @@ export class GeminiProvider implements IUsageProvider {
       if (config.apiKey) headers["Authorization"] = `Bearer ${config.apiKey}`;
       const res = await fetch(url, { headers });
       if (!res.ok) {
-        return this.errorSnapshot(config.id, `${res.status}: ${await res.text()}`);
+        return this.errorSnapshot(config.id);
       }
       const body = (await res.json()) as CustomEndpointResponse;
       const used = body.used ?? 0;
@@ -76,15 +73,12 @@ export class GeminiProvider implements IUsageProvider {
         status,
         displayName: config.displayName ?? "Gemini",
       };
-    } catch (err) {
-      return this.errorSnapshot(
-        config.id,
-        err instanceof Error ? err.message : String(err),
-      );
+    } catch {
+      return this.errorSnapshot(config.id);
     }
   }
 
-  private errorSnapshot(providerId: string, message: string): UsageSnapshot {
+  private errorSnapshot(providerId: string): UsageSnapshot {
     return {
       providerId,
       used: 0,

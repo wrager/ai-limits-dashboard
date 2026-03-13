@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AI Limits Dashboard",
+  "version": "0.1.0",
+  "identifier": "com.ailimits.dashboard",
+  "build": {
+    "beforeDevCommand": "pnpm run dev",
+    "beforeBuildCommand": "pnpm run build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "AI Limits Dashboard",
+        "width": 420,
+        "height": 320,
+        "resizable": true,
+        "decorations": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "longDescription": "Widget for displaying AI service limits (OpenAI, Anthropic, Gemini, z.ai) in Windows taskbar.",
+    "shortDescription": "AI Limits Dashboard",
+    "category": "Utility",
+    "copyright": "",
+    "licenseFile": null,
+    "resources": []
+  },
+  "plugins": {}
+}

@@ -25,7 +25,7 @@ export class AnthropicProvider implements IUsageProvider {
 
   async fetchUsage(config: ProviderConfig): Promise<UsageSnapshot> {
     if (!this.validateConfig(config) || !config.apiKey) {
-      return this.errorSnapshot(config.id, "Invalid config");
+      return this.errorSnapshot(config.id);
     }
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -41,8 +41,8 @@ export class AnthropicProvider implements IUsageProvider {
         },
       });
       if (!res.ok) {
-        const text = await res.text();
-        return this.errorSnapshot(config.id, `${res.status}: ${text}`);
+        await res.text(); // consume body
+        return this.errorSnapshot(config.id);
       }
       const body = (await res.json()) as CostReportResponse;
       let used = 0;
@@ -64,15 +64,12 @@ export class AnthropicProvider implements IUsageProvider {
         status,
         displayName: config.displayName ?? "Anthropic",
       };
-    } catch (err) {
-      return this.errorSnapshot(
-        config.id,
-        err instanceof Error ? err.message : String(err),
-      );
+    } catch {
+      return this.errorSnapshot(config.id);
     }
   }
 
-  private errorSnapshot(providerId: string, message: string): UsageSnapshot {
+  private errorSnapshot(providerId: string): UsageSnapshot {
     return {
       providerId,
       used: 0,

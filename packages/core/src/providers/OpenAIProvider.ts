@@ -25,7 +25,7 @@ export class OpenAIProvider implements IUsageProvider {
 
   async fetchUsage(config: ProviderConfig): Promise<UsageSnapshot> {
     if (!this.validateConfig(config) || !config.apiKey) {
-      return this.errorSnapshot(config.id, "Invalid config");
+      return this.errorSnapshot(config.id);
     }
     const now = Math.floor(Date.now() / 1000);
     const startOfMonth = new Date();
@@ -38,8 +38,8 @@ export class OpenAIProvider implements IUsageProvider {
         headers: { Authorization: `Bearer ${config.apiKey}` },
       });
       if (!res.ok) {
-        const text = await res.text();
-        return this.errorSnapshot(config.id, `${res.status}: ${text}`);
+        await res.text(); // consume body
+        return this.errorSnapshot(config.id);
       }
       const body = (await res.json()) as CompletionsResponse;
       let used = 0;
@@ -62,15 +62,12 @@ export class OpenAIProvider implements IUsageProvider {
         status,
         displayName: config.displayName ?? "OpenAI",
       };
-    } catch (err) {
-      return this.errorSnapshot(
-        config.id,
-        err instanceof Error ? err.message : String(err),
-      );
+    } catch {
+      return this.errorSnapshot(config.id);
     }
   }
 
-  private errorSnapshot(providerId: string, message: string): UsageSnapshot {
+  private errorSnapshot(providerId: string): UsageSnapshot {
     return {
       providerId,
       used: 0,
