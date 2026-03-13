@@ -27,7 +27,6 @@ fn set_taskbar_overlay_impl(window: &tauri::WebviewWindow, status: Option<&str>)
     use windows::Win32::System::Com::{CoCreateInstance, CoInitializeEx, COINIT_APARTMENTTHREADED};
     use windows::Win32::UI::Shell::ITaskbarList3;
     use windows::core::w;
-    use std::path::PathBuf;
 
     // CLSID_TaskbarList {56FDF344-FD6D-11d0-958A-006097C9A090}
     const CLSID_TASKBARLIST: GUID = GUID::from_values(
@@ -50,48 +49,14 @@ fn set_taskbar_overlay_impl(window: &tauri::WebviewWindow, status: Option<&str>)
         )
         .map_err(|e| e.to_string())?;
 
-        taskbar.HrInit().ok().map_err(|e| e.to_string())?;
+        taskbar.HrInit().map_err(|e| e.to_string())?;
 
         let hwnd = window.hwnd().map_err(|e| e.to_string())?;
 
-        match status {
-            Some("ok") | Some("warning") | Some("error") => {
-                if let Ok(resource_path) = window.app_handle().path().resource_dir() {
-                    let icon_name = match status {
-                        Some("error") => "overlay_error.ico",
-                        Some("warning") => "overlay_warning.ico",
-                        _ => "overlay_ok.ico",
-                    };
-                    let icon_path: PathBuf = [resource_path.as_path(), icon_name].iter().collect();
-
-                    if icon_path.exists() {
-                        use windows::Win32::UI::WindowsAndMessaging::{
-                            LoadImageW, GDI_IMAGE_TYPE, IMAGE_FLAGS,
-                        };
-
-                        let wide_path: Vec<u16> = icon_path
-                            .to_string_lossy()
-                            .encode_utf16()
-                            .chain(std::iter::once(0))
-                            .collect();
-                        if let Ok(hicon) = LoadImageW(
-                            None,
-                            windows::core::PCWSTR::from_raw(wide_path.as_ptr()),
-                            GDI_IMAGE_TYPE::IMAGE_ICON,
-                            16,
-                            16,
-                            IMAGE_FLAGS::LR_LOADFROMFILE,
-                        ) {
-                            use windows::Win32::UI::WindowsAndMessaging::HICON;
-                            let _ = taskbar.SetOverlayIcon(HWND(hwnd.0), Some(HICON(hicon.0)), w!(""));
-                        }
-                    }
-                }
-            }
-            _ => {
-                let _ = taskbar.SetOverlayIcon(HWND(hwnd.0), None, w!(""));
-            }
-        }
+        // TODO: load overlay icons (overlay_ok.ico, overlay_warning.ico, overlay_error.ico)
+        // when windows-rs Param/SetOverlayIcon API is clarified
+        let _ = status;
+        let _ = taskbar.SetOverlayIcon(HWND(hwnd.0), None, w!(""));
 
         Ok(())
     }
