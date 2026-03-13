@@ -72,7 +72,7 @@ jobs:
       - name: Generate Gradle wrapper
         working-directory: apps/android
         run: |
-          docker run --rm -v "$(pwd):/project" -w /project gradle:8.7-jdk17 gradle wrapper --gradle-version 8.7
+          docker run --rm -v "$(pwd):/project" -w /project gradle:8.9-jdk17 gradle wrapper --gradle-version 8.9
 
       - name: Build release APK
         working-directory: apps/android
