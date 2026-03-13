@@ -7,7 +7,8 @@
 ## Архитектура
 
 - **packages/core** — shared TypeScript: модели данных, интерфейс `IUsageProvider`, адаптеры провайдеров. Isomorphic (Node + browser).
-- **apps/desktop** — Tauri 2 приложение: taskbar-режим, опция desktop widget, popup и полноэкранный dashboard.
+- **apps/desktop** — Tauri 2 приложение: taskbar-режим, опция desktop widget, popup и полноэкранный dashboard, Win32 overlay.
+- **apps/android** — Android виджет (Jetpack Glance): размеры 1-max×1-2 ячеек, полноэкранный dashboard.
 
 ## Команды
 

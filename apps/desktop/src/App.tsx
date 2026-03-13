@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { load } from "@tauri-apps/plugin-store";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { aggregateUsage } from "@ai-limits/core";
 import type { ProviderConfig } from "@ai-limits/core";
@@ -152,6 +153,15 @@ function App() {
         .join(" · ");
       const win = getCurrentWindow();
       win.setTitle(summary || "AI Limits");
+      const worst =
+        aggregated.snapshots.some((s) => s.status === "error")
+          ? "error"
+          : aggregated.snapshots.some((s) => s.status === "warning")
+            ? "warning"
+            : aggregated.snapshots.length > 0
+              ? "ok"
+              : null;
+      await invoke("set_taskbar_overlay", { status: worst });
     } catch {
       // Not in Tauri
     }
